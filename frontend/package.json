@@ -1,0 +1,22 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack-dev-server"
+  },
+  "devDependencies": {
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "autoprefixer": "^9.8.6",
+    "compression-webpack-plugin": "^5.0.1",
+    "extract-css-chunks-webpack-plugin": "^4.7.5",
+    "uuid": "^8.3.0",
+    "vue": "^2.6.12",
+    "webpack-manifest-plugin": "^2.2.0"
+  }
+}

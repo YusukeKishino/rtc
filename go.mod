@@ -14,4 +14,5 @@ require (
 	github.com/pion/webrtc/v2 v2.2.24
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
+	github.com/toorop/gin-logrus v0.0.0-20190701131413-6c374ad36b67
 )

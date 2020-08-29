@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
@@ -16,13 +17,27 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
+	ginlogrus "github.com/toorop/gin-logrus"
 )
 
 var (
 	cert string
 	key  string
 	addr string
+	env  string
 )
+
+const (
+	Dev  = "development"
+	Prod = "production"
+)
+
+func init() {
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339,
+	})
+}
 
 func parse() bool {
 	flag.StringVar(&cert, "cert", "", "cert file")
@@ -30,6 +45,13 @@ func parse() bool {
 	flag.StringVar(&addr, "a", ":8080", "address to use")
 	help := flag.Bool("h", false, "help info")
 	flag.Parse()
+
+	e := os.Getenv("RTC_ENV")
+	if e != "" {
+		env = e
+	} else {
+		env = Dev
+	}
 
 	if *help {
 		showHelp()
@@ -49,16 +71,19 @@ func showHelp() {
 
 func main() {
 	parse()
-	webpack.DevHost = "localhost:3808" // default
-	webpack.Plugin = "manifest"        // defaults to stats for compatability
-	webpack.FsPath = "./frontend/public/webpack"
-	// webpack.IgnoreMissing = true // ignore assets not present in manifest
-	webpack.Init(false)
+	setupWebpack()
 
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(ginlogrus.Logger(logrus.StandardLogger()), gin.Recovery())
 	engine.HTMLRender = loadTemplates("./cmd/server/views")
-	engine.GET("/webpack/*name", func(c *gin.Context) {
-		c.File("frontend/public/webpack/" + c.Param("name"))
+
+	if env == Prod {
+		engine.GET("/webpack/*name", func(c *gin.Context) {
+			c.File("frontend/public/webpack/" + c.Param("name"))
+		})
+	}
+	engine.GET("/favicon.ico", func(c *gin.Context) {
+		c.File("config/favicon.png")
 	})
 
 	upgrader := websocket.Upgrader{
@@ -106,6 +131,13 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func setupWebpack() {
+	webpack.DevHost = "localhost:3808" // default
+	webpack.Plugin = "manifest"        // defaults to stats for compatability
+	webpack.FsPath = "./frontend/public/webpack"
+	webpack.Init(env == Dev)
 }
 
 func loadTemplates(templatesDir string) multitemplate.Renderer {
